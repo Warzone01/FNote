@@ -1,0 +1,8 @@
+<resources>
+    <string name="app_name">FNotes</string>
+    <string name="free_notes_logo">FREE Notes</string>
+    <string name="search_hint">Search</string>
+    <string name="note_title_edit_text">Note title</string>
+    <string name="note_subtitle_edit_text">Note subtitle</string>
+    <string name="input_note_edit_text">Type your awesome note here</string>
+</resources>
