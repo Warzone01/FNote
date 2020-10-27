@@ -18,11 +18,12 @@ import androidx.recyclerview.widget.RecyclerView
 import com.kirdevelopment.fnotes.R
 import com.kirdevelopment.fnotes.activities.CreateNoteActivity
 import com.kirdevelopment.fnotes.entities.Note
+import com.kirdevelopment.fnotes.listeners.NotesListener
 import com.makeramen.roundedimageview.RoundedImageView
 import kotlinx.android.synthetic.main.layout_miscellaneous.view.*
 import kotlinx.android.synthetic.main.note_item.view.*
 
-class NotesAdapter(private var notes: List<Note>) : RecyclerView.Adapter<NotesAdapter.NoteViewHolder>() {
+class NotesAdapter(private var notes: List<Note>, private var notesListener: NotesListener) : RecyclerView.Adapter<NotesAdapter.NoteViewHolder>() {
 
     @NonNull
     override fun onCreateViewHolder(@NonNull parent: ViewGroup, viewType: Int): NoteViewHolder {
@@ -37,6 +38,9 @@ class NotesAdapter(private var notes: List<Note>) : RecyclerView.Adapter<NotesAd
 
     override fun onBindViewHolder(holder: NoteViewHolder, position: Int) {
         holder.setNote(notes[position])
+        holder.layoutNote.setOnClickListener {
+            notesListener.onNoteClicked(notes[position], position)
+        }
     }
 
     override fun getItemCount(): Int {

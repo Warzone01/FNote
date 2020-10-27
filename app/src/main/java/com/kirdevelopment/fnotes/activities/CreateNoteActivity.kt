@@ -59,6 +59,8 @@ class CreateNoteActivity : AppCompatActivity() {
 
     private var dialogAddUrl: AlertDialog? = null
 
+    private var alreadyAvailableNote: Note? = null
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_create_note)
@@ -91,8 +93,30 @@ class CreateNoteActivity : AppCompatActivity() {
         selectedNoteColor = "#333333"
         selectedImagePath = ""
 
+        if (intent.getBooleanExtra("isViewOrUpdate", false)){
+            alreadyAvailableNote = intent.getSerializableExtra("note") as Note
+            setViewOrUpdateNote()
+        }
+
         initMiscellaneous()
         setSubtitleIndicatorColor()
+    }
+
+    private fun setViewOrUpdateNote(){
+        inputNoteTitle?.setText(alreadyAvailableNote!!.title)
+        inputNoteSubtitle?.setText(alreadyAvailableNote!!.subtitle)
+        inputNoteText?.setText(alreadyAvailableNote!!.noteText)
+        textDateTime?.setText(alreadyAvailableNote!!.dateTime)
+        if (alreadyAvailableNote!!.imagePath != "" && alreadyAvailableNote!!.imagePath.trim().isNotEmpty()){
+            imageNote.setImageBitmap(BitmapFactory.decodeFile(alreadyAvailableNote!!.imagePath))
+            imageNote.visibility = View.VISIBLE
+            selectedImagePath = alreadyAvailableNote!!.imagePath
+        }
+
+        if (alreadyAvailableNote!!.webLink != "" && alreadyAvailableNote!!.webLink.trim().isNotEmpty()){
+            textWebURL.text = alreadyAvailableNote!!.webLink
+            layoutWebURL.visibility = View.VISIBLE
+        }
     }
 
     private fun saveNote(){
@@ -116,6 +140,10 @@ class CreateNoteActivity : AppCompatActivity() {
 
         if (layoutWebURL.visibility == View.VISIBLE){
             note.webLink = textWebURL.text.toString()
+        }
+
+        if (alreadyAvailableNote != null){
+            note.id = alreadyAvailableNote!!.id
         }
 
 
@@ -195,6 +223,15 @@ class CreateNoteActivity : AppCompatActivity() {
             imageViewColor4.setImageResource(0)
             imageViewColor5.setImageResource(R.drawable.ic_done)
             setSubtitleIndicatorColor()
+        }
+
+        if (alreadyAvailableNote != null && alreadyAvailableNote!!.color != "" && alreadyAvailableNote!!.color.trim().isNotEmpty()){
+            when(alreadyAvailableNote!!.color){
+                    "#FDBE3B" -> layoutMiscellaneous.viewColor2.performClick()
+                    "#FF4842" -> layoutMiscellaneous.viewColor3.performClick()
+                    "#3A52Fc" -> layoutMiscellaneous.viewColor4.performClick()
+                    "#000000" -> layoutMiscellaneous.viewColor5.performClick()
+            }
         }
 
         layoutMiscellaneous.layoutAddImage.setOnClickListener {

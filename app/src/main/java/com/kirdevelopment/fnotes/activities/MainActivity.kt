@@ -11,17 +11,22 @@ import com.kirdevelopment.fnotes.R
 import com.kirdevelopment.fnotes.adapters.NotesAdapter
 import com.kirdevelopment.fnotes.database.NotesDatabase
 import com.kirdevelopment.fnotes.entities.Note
+import com.kirdevelopment.fnotes.listeners.NotesListener
 import org.jetbrains.anko.doAsync
 import org.jetbrains.anko.uiThread
 import kotlin.collections.ArrayList
 
-class MainActivity : AppCompatActivity() {
+class MainActivity : AppCompatActivity(), NotesListener {
 
-    private val REQUEST_CODE_ADD_NOTE: Int = 1
+    val REQUEST_CODE_ADD_NOTE: Int = 1
+    val REQUEST_CODE_UPDATE_NOTE: Int = 2
+    val REQUEST_CODE_SHOW_NOTE: Int = 3
 
     private lateinit var notesRecyclerView: RecyclerView
     private var noteList: ArrayList<Note> = ArrayList()
     private lateinit var noteAdapter: NotesAdapter
+
+    private var noteClickedPosition: Int = -1
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -38,13 +43,22 @@ class MainActivity : AppCompatActivity() {
         notesRecyclerView = findViewById(R.id.notesRecyclerView)
         notesRecyclerView.layoutManager = StaggeredGridLayoutManager(2, StaggeredGridLayoutManager.VERTICAL)
 
-        noteAdapter = NotesAdapter(noteList)
+        noteAdapter = NotesAdapter(noteList, this)
         notesRecyclerView.adapter = noteAdapter
 
-        getNotes()
+        getNotes(REQUEST_CODE_SHOW_NOTE)
     }
 
-    private fun getNotes(){ // function getting notes from database
+    override fun onNoteClicked(note: Note, position: Int) {
+        super.onNoteClicked(note, position)
+        noteClickedPosition = position
+        var intent = Intent(applicationContext, CreateNoteActivity::class.java)
+        intent.putExtra("isViewOrUpdate", true)
+        intent.putExtra("note", note)
+        startActivityForResult(intent, REQUEST_CODE_UPDATE_NOTE)
+    }
+
+    private fun getNotes(requestCode: Int){ // function getting notes from database
 
         doAsync {
             val list = NotesDatabase
@@ -52,14 +66,18 @@ class MainActivity : AppCompatActivity() {
                 .noteDao()
                 .getAllNotes() //new list of notes (with main params(title and datetime))
             uiThread {
-                if (noteList.size == 0) {
+                if (requestCode == REQUEST_CODE_SHOW_NOTE){
                     noteList.addAll(list)
                     noteAdapter.notifyDataSetChanged()
-                } else {
-                    noteList.add(0, list.get(0))
+                } else if(requestCode == REQUEST_CODE_ADD_NOTE){
+                    noteList.add(0, list[0])
                     noteAdapter.notifyItemInserted(0)
+                    notesRecyclerView.smoothScrollToPosition(0)
+                } else if (requestCode == REQUEST_CODE_UPDATE_NOTE){
+                    noteList.removeAt(noteClickedPosition)
+                    noteList.add(noteClickedPosition, list[noteClickedPosition])
+                    noteAdapter.notifyItemChanged(noteClickedPosition)
                 }
-                notesRecyclerView.smoothScrollToPosition(0)
             }
         }
     }
@@ -67,7 +85,11 @@ class MainActivity : AppCompatActivity() {
     override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
         super.onActivityResult(requestCode, resultCode, data)
         if (requestCode == REQUEST_CODE_ADD_NOTE && resultCode == RESULT_OK){
-            getNotes()
+            getNotes(REQUEST_CODE_ADD_NOTE)
+        } else if (requestCode == REQUEST_CODE_UPDATE_NOTE && resultCode == RESULT_OK){
+            if (data != null){
+                getNotes(REQUEST_CODE_UPDATE_NOTE)
+            }
         }
     }
 }
