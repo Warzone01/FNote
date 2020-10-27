@@ -1,24 +1,29 @@
 package com.kirdevelopment.fnotes.adapters
 
+import android.graphics.Color
+import android.graphics.Color.*
+import android.graphics.drawable.Drawable
+import android.graphics.drawable.GradientDrawable
+import android.os.Build
 import android.view.LayoutInflater
 import android.view.TextureView
 import android.view.View
 import android.view.ViewGroup
+import android.widget.LinearLayout
 import android.widget.TextView
+import androidx.annotation.NonNull
+import androidx.annotation.RequiresApi
 import androidx.recyclerview.widget.RecyclerView
 import com.kirdevelopment.fnotes.R
+import com.kirdevelopment.fnotes.activities.CreateNoteActivity
 import com.kirdevelopment.fnotes.entities.Note
+import kotlinx.android.synthetic.main.layout_miscellaneous.view.*
 import kotlinx.android.synthetic.main.note_item.view.*
 
-class NotesAdapter: RecyclerView.Adapter<NotesAdapter.NoteViewHolder> {
+class NotesAdapter(private var notes: List<Note>) : RecyclerView.Adapter<NotesAdapter.NoteViewHolder>() {
 
-    private lateinit var notes: List<Note>
-
-    constructor(notes: List<Note>) {
-        this.notes = notes
-    }
-
-    override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): NoteViewHolder {
+    @NonNull
+    override fun onCreateViewHolder(@NonNull parent: ViewGroup, viewType: Int): NoteViewHolder {
         return NoteViewHolder(
                 LayoutInflater.from(parent.context).inflate(
                         R.layout.note_item,
@@ -40,16 +45,18 @@ class NotesAdapter: RecyclerView.Adapter<NotesAdapter.NoteViewHolder> {
         return position
     }
 
-    class NoteViewHolder: RecyclerView.ViewHolder{
+    class NoteViewHolder(@NonNull itemView: View) : RecyclerView.ViewHolder(itemView) {
 
-        lateinit var textViewTitle: TextView
-        lateinit var textViewSubtitle: TextView
-        lateinit var textViewDateTime: TextView
+        var textViewTitle: TextView
+        var textViewSubtitle: TextView
+        var textViewDateTime: TextView
+        var layoutNote: LinearLayout
 
-        constructor(itemView: View) : super(itemView){
+        init {
             textViewTitle = itemView.findViewById(R.id.textTitle)
             textViewSubtitle = itemView.findViewById(R.id.textSubtitle)
             textViewDateTime = itemView.findViewById(R.id.textDate)
+            layoutNote = itemView.findViewById(R.id.layoutNote)
         }
 
         fun setNote(note: Note){
@@ -60,6 +67,13 @@ class NotesAdapter: RecyclerView.Adapter<NotesAdapter.NoteViewHolder> {
                 textViewSubtitle.text = note.subtitle
             }
             textViewDateTime.text = note.dateTime
+
+            val gradientDrawable = layoutNote.background as GradientDrawable
+            if (note.color != "") {
+                gradientDrawable.setColor(Color.parseColor(note.color))
+            }else{
+                gradientDrawable.setColor(Color.parseColor("#333333"))
+            }
         }
 
     }
