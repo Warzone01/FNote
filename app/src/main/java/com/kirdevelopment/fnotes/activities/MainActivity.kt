@@ -46,7 +46,7 @@ class MainActivity : AppCompatActivity(), NotesListener {
         noteAdapter = NotesAdapter(noteList, this)
         notesRecyclerView.adapter = noteAdapter
 
-        getNotes(REQUEST_CODE_SHOW_NOTE)
+        getNotes(REQUEST_CODE_SHOW_NOTE, false)
     }
 
     override fun onNoteClicked(note: Note, position: Int) {
@@ -58,7 +58,7 @@ class MainActivity : AppCompatActivity(), NotesListener {
         startActivityForResult(intent, REQUEST_CODE_UPDATE_NOTE)
     }
 
-    private fun getNotes(requestCode: Int){ // function getting notes from database
+    private fun getNotes(requestCode: Int, isNoteDeleted: Boolean){ // function getting notes from database
 
         doAsync {
             val list = NotesDatabase
@@ -75,8 +75,14 @@ class MainActivity : AppCompatActivity(), NotesListener {
                     notesRecyclerView.smoothScrollToPosition(0)
                 } else if (requestCode == REQUEST_CODE_UPDATE_NOTE){
                     noteList.removeAt(noteClickedPosition)
-                    noteList.add(noteClickedPosition, list[noteClickedPosition])
-                    noteAdapter.notifyItemChanged(noteClickedPosition)
+
+
+                    if (isNoteDeleted){
+                        noteAdapter.notifyItemRemoved(noteClickedPosition)
+                    }else{
+                        noteList.add(noteClickedPosition, list[noteClickedPosition])
+                        noteAdapter.notifyItemChanged(noteClickedPosition)
+                    }
                 }
             }
         }
@@ -85,10 +91,10 @@ class MainActivity : AppCompatActivity(), NotesListener {
     override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
         super.onActivityResult(requestCode, resultCode, data)
         if (requestCode == REQUEST_CODE_ADD_NOTE && resultCode == RESULT_OK){
-            getNotes(REQUEST_CODE_ADD_NOTE)
+            getNotes(REQUEST_CODE_ADD_NOTE, false)
         } else if (requestCode == REQUEST_CODE_UPDATE_NOTE && resultCode == RESULT_OK){
             if (data != null){
-                getNotes(REQUEST_CODE_UPDATE_NOTE)
+                getNotes(REQUEST_CODE_UPDATE_NOTE, data.getBooleanExtra("isNoteDeleted", false))
             }
         }
     }

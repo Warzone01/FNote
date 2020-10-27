@@ -27,7 +27,11 @@ import com.google.android.material.bottomsheet.BottomSheetBehavior
 import com.kirdevelopment.fnotes.R
 import com.kirdevelopment.fnotes.database.NotesDatabase
 import com.kirdevelopment.fnotes.entities.Note
+import kotlinx.android.synthetic.main.activity_create_note.*
 import kotlinx.android.synthetic.main.layout_add_url.view.*
+import kotlinx.android.synthetic.main.layout_add_url.view.textCancel
+import kotlinx.android.synthetic.main.layout_delete_note.view.*
+import kotlinx.android.synthetic.main.layout_miscellaneous.*
 import kotlinx.android.synthetic.main.layout_miscellaneous.view.*
 import org.jetbrains.anko.doAsync
 import org.jetbrains.anko.find
@@ -58,6 +62,7 @@ class CreateNoteActivity : AppCompatActivity() {
     private val REQUEST_CODE_SELECT_IMAGE = 2
 
     private var dialogAddUrl: AlertDialog? = null
+    private var dialogDeleteNote: AlertDialog? = null
 
     private var alreadyAvailableNote: Note? = null
 
@@ -98,6 +103,18 @@ class CreateNoteActivity : AppCompatActivity() {
             setViewOrUpdateNote()
         }
 
+        imageRemoveWebURL.setOnClickListener {
+            textWebURL.text = ""
+            layoutWebURL.visibility = View.GONE
+        }
+
+        imageRemoveImage.setOnClickListener {
+            imageNote.setImageBitmap(null)
+            imageNote.visibility = View.GONE
+            imageRemoveImage.visibility = View.GONE
+            selectedImagePath = ""
+        }
+
         initMiscellaneous()
         setSubtitleIndicatorColor()
     }
@@ -110,6 +127,7 @@ class CreateNoteActivity : AppCompatActivity() {
         if (alreadyAvailableNote!!.imagePath != "" && alreadyAvailableNote!!.imagePath.trim().isNotEmpty()){
             imageNote.setImageBitmap(BitmapFactory.decodeFile(alreadyAvailableNote!!.imagePath))
             imageNote.visibility = View.VISIBLE
+            imageRemoveImage.visibility = View.VISIBLE
             selectedImagePath = alreadyAvailableNote!!.imagePath
         }
 
@@ -255,6 +273,50 @@ class CreateNoteActivity : AppCompatActivity() {
             showAddURLDialog()
         }
 
+        if (alreadyAvailableNote != null){
+            layoutMiscellaneous.layoutDeleteNote.visibility = View.VISIBLE
+            layoutMiscellaneous.layoutDeleteNote.setOnClickListener {
+                bottomSheetBehavior.state = BottomSheetBehavior.STATE_COLLAPSED
+                showDeleteNoteDialog()
+            }
+        }
+    }
+
+    private fun showDeleteNoteDialog(){
+        if (dialogDeleteNote == null){
+            var builder: AlertDialog.Builder = AlertDialog.Builder(this@CreateNoteActivity)
+            var view: View = LayoutInflater.from(this@CreateNoteActivity).inflate(
+                    R.layout.layout_delete_note,
+                    findViewById<ViewGroup>(R.id.layoutDeleteNoteContainer)
+            )
+            builder.setView(view)
+
+            dialogDeleteNote = builder.create()
+            if (dialogDeleteNote!!.window != null){
+                dialogDeleteNote!!.window?.setBackgroundDrawable(ColorDrawable(0))
+            }
+            view.textDeleteNote.setOnClickListener {
+                doAsync {
+                    alreadyAvailableNote?.let { it1 ->
+                        NotesDatabase.getDatabase(applicationContext).noteDao()
+                                .deleteNote(it1)
+                    }
+                    uiThread {
+                        var intent:Intent = Intent()
+                        intent.putExtra("isNoteDeleted", true)
+                        setResult(RESULT_OK, intent)
+                        finish()
+                    }
+                }
+            }
+
+            view.textCancel.setOnClickListener {
+                dialogDeleteNote!!.dismiss()
+            }
+        }
+
+        dialogDeleteNote!!.show()
+
     }
 
     private fun setSubtitleIndicatorColor(){
@@ -293,6 +355,7 @@ class CreateNoteActivity : AppCompatActivity() {
                         var bitmap:Bitmap = BitmapFactory.decodeStream(inputStream)
                         imageNote.setImageBitmap(bitmap)
                         imageNote.visibility = View.VISIBLE
+                        imageRemoveImage.visibility = View.VISIBLE
 
                         selectedImagePath = getPathFromUri(selectedImageUri)
 
