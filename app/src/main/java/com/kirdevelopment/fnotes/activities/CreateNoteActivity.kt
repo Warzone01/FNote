@@ -7,23 +7,30 @@ import android.database.Cursor
 import android.graphics.Bitmap
 import android.graphics.BitmapFactory
 import android.graphics.Color
+import android.graphics.drawable.ColorDrawable
 import android.graphics.drawable.GradientDrawable
 import android.net.Uri
 import android.os.Build
 import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
 import android.provider.MediaStore
+import android.util.Patterns
+import android.view.LayoutInflater
 import android.view.View
+import android.view.ViewGroup
 import android.widget.*
 import androidx.annotation.RequiresApi
+import androidx.appcompat.app.AlertDialog
 import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
 import com.google.android.material.bottomsheet.BottomSheetBehavior
 import com.kirdevelopment.fnotes.R
 import com.kirdevelopment.fnotes.database.NotesDatabase
 import com.kirdevelopment.fnotes.entities.Note
+import kotlinx.android.synthetic.main.layout_add_url.view.*
 import kotlinx.android.synthetic.main.layout_miscellaneous.view.*
 import org.jetbrains.anko.doAsync
+import org.jetbrains.anko.find
 import org.jetbrains.anko.toast
 import org.jetbrains.anko.uiThread
 import java.io.InputStream
@@ -39,6 +46,8 @@ class CreateNoteActivity : AppCompatActivity() {
     private var textDateTime: TextView? = null
     private lateinit var nDb: NotesDatabase
     private lateinit var imageNote: ImageView
+    private lateinit var textWebURL: TextView
+    private lateinit var layoutWebURL: LinearLayout
 
     private lateinit var viewSubtitleIndicator: View
 
@@ -47,6 +56,8 @@ class CreateNoteActivity : AppCompatActivity() {
 
     private val REQUEST_CODE_STORAGE_PERMISSION: Int = 1
     private val REQUEST_CODE_SELECT_IMAGE = 2
+
+    private var dialogAddUrl: AlertDialog? = null
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -66,6 +77,8 @@ class CreateNoteActivity : AppCompatActivity() {
                 .format(Date())
         viewSubtitleIndicator = findViewById(R.id.viewSubtitleIndicator)
         imageNote = findViewById(R.id.imageNote)
+        textWebURL = findViewById(R.id.textWebURl)
+        layoutWebURL = findViewById(R.id.layoutWebUrl)
 
         nDb = NotesDatabase.getDatabase(applicationContext) // get note database
 
@@ -101,6 +114,9 @@ class CreateNoteActivity : AppCompatActivity() {
         note.color = selectedNoteColor
         note.imagePath = selectedImagePath
 
+        if (layoutWebURL.visibility == View.VISIBLE){
+            note.webLink = textWebURL.text.toString()
+        }
 
 
         doAsync {
@@ -196,6 +212,12 @@ class CreateNoteActivity : AppCompatActivity() {
                 selectImage()
             }
         }
+
+        layoutMiscellaneous.layoutAddUrl.setOnClickListener {
+            bottomSheetBehavior.state = BottomSheetBehavior.STATE_COLLAPSED
+            showAddURLDialog()
+        }
+
     }
 
     private fun setSubtitleIndicatorColor(){
@@ -258,6 +280,42 @@ class CreateNoteActivity : AppCompatActivity() {
             cursor.close()
         }
         return filePath
+    }
+
+    private fun showAddURLDialog(){
+        if (dialogAddUrl == null){
+            var builder: AlertDialog.Builder = AlertDialog.Builder(this@CreateNoteActivity)
+            val view: View = LayoutInflater.from(this).inflate(
+                    R.layout.layout_add_url,
+                    findViewById<ViewGroup>(R.id.layoutAddUrlContainer)
+            )
+            builder.setView(view)
+
+            dialogAddUrl = builder.create()
+
+            if(dialogAddUrl!!.window != null){
+                dialogAddUrl!!.window!!.setBackgroundDrawable(ColorDrawable(0))
+            }
+            val inputURL:EditText = view.findViewById(R.id.inputUrl)
+            inputURL.requestFocus()
+
+            view.textAdd.setOnClickListener {
+                if (inputURL.text.toString().trim().isEmpty()){
+                    Toast.makeText(this@CreateNoteActivity, "Enter URL", Toast.LENGTH_SHORT).show()
+                } else if(!Patterns.WEB_URL.matcher(inputURL.text.toString()).matches()){
+                    Toast.makeText(this@CreateNoteActivity, "Enter valid URL", Toast.LENGTH_SHORT).show()
+                }else{
+                    textWebURL.text = inputURL.text.toString()
+                    layoutWebURL.visibility = View.VISIBLE
+                    dialogAddUrl!!.dismiss()
+                }
+            }
+
+            view.textCancel.setOnClickListener {
+                dialogAddUrl!!.dismiss()
+            }
+        }
+        dialogAddUrl!!.show()
     }
 
 }
