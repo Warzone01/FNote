@@ -1,5 +1,6 @@
 package com.kirdevelopment.fnotes.adapters
 
+import android.graphics.BitmapFactory
 import android.graphics.Color
 import android.graphics.Color.*
 import android.graphics.drawable.Drawable
@@ -17,6 +18,7 @@ import androidx.recyclerview.widget.RecyclerView
 import com.kirdevelopment.fnotes.R
 import com.kirdevelopment.fnotes.activities.CreateNoteActivity
 import com.kirdevelopment.fnotes.entities.Note
+import com.makeramen.roundedimageview.RoundedImageView
 import kotlinx.android.synthetic.main.layout_miscellaneous.view.*
 import kotlinx.android.synthetic.main.note_item.view.*
 
@@ -51,12 +53,14 @@ class NotesAdapter(private var notes: List<Note>) : RecyclerView.Adapter<NotesAd
         var textViewSubtitle: TextView
         var textViewDateTime: TextView
         var layoutNote: LinearLayout
+        var imageNote: RoundedImageView
 
         init {
             textViewTitle = itemView.findViewById(R.id.textTitle)
             textViewSubtitle = itemView.findViewById(R.id.textSubtitle)
             textViewDateTime = itemView.findViewById(R.id.textDate)
             layoutNote = itemView.findViewById(R.id.layoutNote)
+            imageNote = itemView.findViewById(R.id.imageNote)
         }
 
         fun setNote(note: Note){
@@ -74,6 +78,14 @@ class NotesAdapter(private var notes: List<Note>) : RecyclerView.Adapter<NotesAd
             }else{
                 gradientDrawable.setColor(Color.parseColor("#333333"))
             }
+
+            if (note.imagePath != ""){
+                imageNote.setImageBitmap(BitmapFactory.decodeFile(note.imagePath))
+                imageNote.visibility = View.VISIBLE
+            }else{
+                imageNote.visibility = View.GONE
+            }
+
         }
 
     }
