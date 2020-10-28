@@ -6,6 +6,8 @@ import android.graphics.Color.*
 import android.graphics.drawable.Drawable
 import android.graphics.drawable.GradientDrawable
 import android.os.Build
+import android.os.Handler
+import android.os.Looper
 import android.view.LayoutInflater
 import android.view.TextureView
 import android.view.View
@@ -22,8 +24,16 @@ import com.kirdevelopment.fnotes.listeners.NotesListener
 import com.makeramen.roundedimageview.RoundedImageView
 import kotlinx.android.synthetic.main.layout_miscellaneous.view.*
 import kotlinx.android.synthetic.main.note_item.view.*
+import java.util.*
+import kotlin.collections.ArrayList
+import kotlin.concurrent.timerTask
 
-class NotesAdapter(private var notes: List<Note>, private var notesListener: NotesListener) : RecyclerView.Adapter<NotesAdapter.NoteViewHolder>() {
+class NotesAdapter(private var notes: List<Note>,
+                   private var notesListener: NotesListener,
+                   ) : RecyclerView.Adapter<NotesAdapter.NoteViewHolder>() {
+
+    private var timer: Timer? = null
+    private var notesSource:List<Note> = notes
 
     @NonNull
     override fun onCreateViewHolder(@NonNull parent: ViewGroup, viewType: Int): NoteViewHolder {
@@ -94,4 +104,31 @@ class NotesAdapter(private var notes: List<Note>, private var notesListener: Not
 
     }
 
+    public fun searchNotes(searchKeyWord: String){
+        timer = Timer()
+        timer!!.schedule(timerTask {
+            if(searchKeyWord.trim().isEmpty()){
+                notes = notesSource
+            }else{
+                var temp: ArrayList<Note> = ArrayList()
+                for (note:Note in notesSource){
+                    if (note.title.toLowerCase().contains(searchKeyWord.toLowerCase())
+                            || note.subtitle.toLowerCase().contains(searchKeyWord.toLowerCase())
+                            ||note.noteText.toLowerCase().contains(searchKeyWord.toLowerCase())){
+                        temp.add(note)
+                    }
+                }
+                notes = temp
+            }
+            Handler(Looper.getMainLooper()).post(Runnable {
+                notifyDataSetChanged()
+            })
+        }, 500)
+    }
+
+    public fun cancelTimer(){
+        if (timer != null){
+            timer!!.cancel()
+        }
+    }
 }

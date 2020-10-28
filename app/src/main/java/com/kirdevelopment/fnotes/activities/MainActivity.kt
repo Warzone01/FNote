@@ -3,7 +3,10 @@ package com.kirdevelopment.fnotes.activities
 import android.content.Intent
 import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
+import android.text.Editable
+import android.text.TextWatcher
 import android.util.Log
+import android.widget.EditText
 import android.widget.ImageView
 import androidx.recyclerview.widget.RecyclerView
 import androidx.recyclerview.widget.StaggeredGridLayoutManager
@@ -12,6 +15,7 @@ import com.kirdevelopment.fnotes.adapters.NotesAdapter
 import com.kirdevelopment.fnotes.database.NotesDatabase
 import com.kirdevelopment.fnotes.entities.Note
 import com.kirdevelopment.fnotes.listeners.NotesListener
+import kotlinx.android.synthetic.main.activity_main.*
 import org.jetbrains.anko.doAsync
 import org.jetbrains.anko.uiThread
 import kotlin.collections.ArrayList
@@ -47,6 +51,23 @@ class MainActivity : AppCompatActivity(), NotesListener {
         notesRecyclerView.adapter = noteAdapter
 
         getNotes(REQUEST_CODE_SHOW_NOTE, false)
+
+        var inputSearch: EditText = findViewById(R.id.inputSearch)
+        inputSearch.addTextChangedListener(object : TextWatcher{
+            override fun beforeTextChanged(s: CharSequence?, start: Int, count: Int, after: Int) {
+
+            }
+
+            override fun onTextChanged(s: CharSequence?, start: Int, before: Int, count: Int) {
+                noteAdapter.cancelTimer()
+            }
+
+            override fun afterTextChanged(s: Editable?) {
+                if (noteList.size != 0){
+                    noteAdapter.searchNotes(s.toString())
+                }
+            }
+        })
     }
 
     override fun onNoteClicked(note: Note, position: Int) {
