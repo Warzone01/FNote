@@ -113,14 +113,15 @@
             <ImageView
                 android:id="@+id/imageNote"
                 android:layout_width="match_parent"
-                android:layout_height="match_parent"
+                android:layout_height="wrap_content"
                 android:layout_marginLeft="@dimen/_12sdp"
                 android:layout_marginTop="@dimen/_15sdp"
                 android:layout_marginRight="@dimen/_12sdp"
                 android:adjustViewBounds="true"
                 android:contentDescription="@string/app_name"
                 android:visibility="gone"
-                app:layout_constraintTop_toBottomOf="@id/inputNoteSubtitle" />
+                app:layout_constraintTop_toBottomOf="@id/inputNoteSubtitle"
+                tools:ignore="MissingConstraints" />
 
             <ImageView
                 android:id="@+id/imageRemoveImage"
@@ -134,8 +135,9 @@
                 android:src="@drawable/ic_delete"
                 android:visibility="gone"
                 app:layout_constraintEnd_toEndOf="@id/imageNote"
-                app:layout_constraintTop_toTopOf="@+id/imageNote"
+                app:layout_constraintTop_toTopOf="@id/imageNote"
                 app:tint="@color/white" />
+
 
             <LinearLayout
                 android:id="@+id/layoutWebUrl"

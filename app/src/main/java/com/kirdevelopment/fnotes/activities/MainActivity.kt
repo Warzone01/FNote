@@ -1,13 +1,29 @@
 package com.kirdevelopment.fnotes.activities
 
+import android.Manifest
 import android.content.Intent
+import android.content.pm.PackageManager
+import android.database.Cursor
+import android.graphics.drawable.ColorDrawable
+import android.net.Uri
+import android.os.Build
 import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
+import android.provider.MediaStore
 import android.text.Editable
 import android.text.TextWatcher
 import android.util.Log
+import android.util.Patterns
+import android.view.LayoutInflater
+import android.view.View
+import android.view.ViewGroup
 import android.widget.EditText
 import android.widget.ImageView
+import android.widget.Toast
+import androidx.annotation.RequiresApi
+import androidx.appcompat.app.AlertDialog
+import androidx.core.app.ActivityCompat
+import androidx.core.content.ContextCompat
 import androidx.recyclerview.widget.RecyclerView
 import androidx.recyclerview.widget.StaggeredGridLayoutManager
 import com.kirdevelopment.fnotes.R
@@ -16,6 +32,7 @@ import com.kirdevelopment.fnotes.database.NotesDatabase
 import com.kirdevelopment.fnotes.entities.Note
 import com.kirdevelopment.fnotes.listeners.NotesListener
 import kotlinx.android.synthetic.main.activity_main.*
+import kotlinx.android.synthetic.main.layout_add_url.view.*
 import org.jetbrains.anko.doAsync
 import org.jetbrains.anko.uiThread
 import kotlin.collections.ArrayList
@@ -25,12 +42,17 @@ class MainActivity : AppCompatActivity(), NotesListener {
     val REQUEST_CODE_ADD_NOTE: Int = 1
     val REQUEST_CODE_UPDATE_NOTE: Int = 2
     val REQUEST_CODE_SHOW_NOTE: Int = 3
+    val REQUEST_CODE_SELECT_IMAGE: Int = 4
+    val REQUEST_CODE_STORAGE_PERMISSION: Int = 5
+
 
     private lateinit var notesRecyclerView: RecyclerView
     private var noteList: ArrayList<Note> = ArrayList()
     private lateinit var noteAdapter: NotesAdapter
 
     private var noteClickedPosition: Int = -1
+
+    private var dialogAddUrl: AlertDialog? = null
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -68,6 +90,64 @@ class MainActivity : AppCompatActivity(), NotesListener {
                 }
             }
         })
+
+        imageAddNote.setOnClickListener {
+            startActivityForResult(Intent(applicationContext,
+                    CreateNoteActivity::class.java),
+                    REQUEST_CODE_ADD_NOTE) // new activity whe we press the button (add new note)
+        }
+
+        imageAddImage.setOnClickListener {
+            if (ContextCompat.checkSelfPermission(
+                            applicationContext,
+                            Manifest.permission.READ_EXTERNAL_STORAGE
+                    ) != PackageManager.PERMISSION_GRANTED){
+                ActivityCompat.requestPermissions(
+                        this@MainActivity,
+                        arrayOf(Manifest.permission.READ_EXTERNAL_STORAGE),
+                        REQUEST_CODE_STORAGE_PERMISSION
+                )
+            }else {
+                selectImage()
+            }
+        }
+
+        imageAddLink.setOnClickListener {
+            showAddURLDialog()
+        }
+    }
+
+    private fun selectImage() {
+        var intent = Intent(Intent.ACTION_PICK, MediaStore.Images.Media.EXTERNAL_CONTENT_URI)
+        if (intent.resolveActivity(packageManager) != null){
+            startActivityForResult(intent, REQUEST_CODE_SELECT_IMAGE)
+        }
+    }
+
+    override fun onRequestPermissionsResult(requestCode: Int, permissions: Array<out String>, grantResults: IntArray) {
+        super.onRequestPermissionsResult(requestCode, permissions, grantResults)
+        if (requestCode == REQUEST_CODE_STORAGE_PERMISSION && grantResults.isNotEmpty()){
+            if(grantResults[0] == PackageManager.PERMISSION_GRANTED){
+                selectImage()
+            }else{
+                Toast.makeText(this, "Permission Denied", Toast.LENGTH_SHORT).show()
+            }
+        }
+    }
+
+    @RequiresApi(Build.VERSION_CODES.O)
+    private fun getPathFromUri(contenUri: Uri): String{
+        var filePath:String
+        var cursor: Cursor? = contentResolver.query(contenUri, null, null, null)
+        if (cursor == null){
+            filePath = contenUri.path.toString()
+        } else {
+            cursor.moveToFirst()
+            var index:Int = cursor.getColumnIndex("_data")
+            filePath = cursor.getString(index)
+            cursor.close()
+        }
+        return filePath
     }
 
     override fun onNoteClicked(note: Note, position: Int) {
@@ -109,6 +189,7 @@ class MainActivity : AppCompatActivity(), NotesListener {
         }
     }
 
+    @RequiresApi(Build.VERSION_CODES.O)
     override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
         super.onActivityResult(requestCode, resultCode, data)
         if (requestCode == REQUEST_CODE_ADD_NOTE && resultCode == RESULT_OK){
@@ -117,7 +198,62 @@ class MainActivity : AppCompatActivity(), NotesListener {
             if (data != null){
                 getNotes(REQUEST_CODE_UPDATE_NOTE, data.getBooleanExtra("isNoteDeleted", false))
             }
+        } else if (requestCode == REQUEST_CODE_SELECT_IMAGE && resultCode == RESULT_OK){
+            if(data != null){
+                var selectedImageUri: Uri? = data.data
+                if (selectedImageUri != null){
+                    try {
+                        var selectedImagePath: String = getPathFromUri(selectedImageUri)
+                        var intent: Intent = Intent(applicationContext, CreateNoteActivity::class.java)
+                        intent.putExtra("isFromQuickActions", true)
+                        intent.putExtra("quickActionType", "image")
+                        intent.putExtra("imagePath", selectedImagePath)
+                        startActivityForResult(intent, REQUEST_CODE_ADD_NOTE)
+                    }catch (exception:Exception){
+                        Toast.makeText(this@MainActivity, exception.message, Toast.LENGTH_SHORT).show()
+                    }
+                }
+            }
         }
+    }
+
+    private fun showAddURLDialog(){
+        if (dialogAddUrl == null){
+            var builder: AlertDialog.Builder = AlertDialog.Builder(this@MainActivity)
+            val view: View = LayoutInflater.from(this).inflate(
+                    R.layout.layout_add_url,
+                    findViewById<ViewGroup>(R.id.layoutAddUrlContainer)
+            )
+            builder.setView(view)
+
+            dialogAddUrl = builder.create()
+
+            if(dialogAddUrl!!.window != null){
+                dialogAddUrl!!.window!!.setBackgroundDrawable(ColorDrawable(0))
+            }
+            val inputURL:EditText = view.findViewById(R.id.inputUrl)
+            inputURL.requestFocus()
+
+            view.textAdd.setOnClickListener {
+                if (inputURL.text.toString().trim().isEmpty()){
+                    Toast.makeText(this@MainActivity, "Enter URL", Toast.LENGTH_SHORT).show()
+                } else if(!Patterns.WEB_URL.matcher(inputURL.text.toString()).matches()){
+                    Toast.makeText(this@MainActivity, "Enter valid URL", Toast.LENGTH_SHORT).show()
+                }else{
+                    dialogAddUrl!!.dismiss()
+                    var intent: Intent = Intent(applicationContext, CreateNoteActivity::class.java)
+                    intent.putExtra("isFromQuickActions", true)
+                    intent.putExtra("quickActionType", "URL")
+                    intent.putExtra("URL", inputURL.text.toString())
+                    startActivityForResult(intent, REQUEST_CODE_ADD_NOTE)
+                }
+            }
+
+            view.textCancel.setOnClickListener {
+                dialogAddUrl!!.dismiss()
+            }
+        }
+        dialogAddUrl!!.show()
     }
 }
 

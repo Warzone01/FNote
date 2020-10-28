@@ -115,6 +115,21 @@ class CreateNoteActivity : AppCompatActivity() {
             selectedImagePath = ""
         }
 
+        if(intent.getBooleanExtra("isFromQuickActions", false)){
+            var type:String? = intent.getStringExtra("quickActionType")
+            if (type != null){
+                if (type == "image"){
+                    selectedImagePath = intent.getStringExtra("imagePath")
+                    imageNote.setImageBitmap(BitmapFactory.decodeFile(selectedImagePath))
+                    imageNote.visibility = View.VISIBLE
+                    imageRemoveImage.visibility = View.VISIBLE
+                } else if (type == "URL"){
+                    textWebURL.text = intent.getStringExtra("URL")
+                    layoutWebURL.visibility = View.VISIBLE
+                }
+            }
+        }
+
         initMiscellaneous()
         setSubtitleIndicatorColor()
     }
@@ -125,7 +140,8 @@ class CreateNoteActivity : AppCompatActivity() {
         inputNoteText?.setText(alreadyAvailableNote!!.noteText)
         textDateTime?.setText(alreadyAvailableNote!!.dateTime)
         if (alreadyAvailableNote!!.imagePath != "" && alreadyAvailableNote!!.imagePath.trim().isNotEmpty()){
-            imageNote.setImageBitmap(BitmapFactory.decodeFile(alreadyAvailableNote!!.imagePath))
+            var options = BitmapFactory.Options()
+            imageNote.setImageBitmap(BitmapFactory.decodeFile(alreadyAvailableNote!!.imagePath, options))
             imageNote.visibility = View.VISIBLE
             imageRemoveImage.visibility = View.VISIBLE
             selectedImagePath = alreadyAvailableNote!!.imagePath
@@ -352,10 +368,12 @@ class CreateNoteActivity : AppCompatActivity() {
                     try {
 
                         var inputStream: InputStream? = contentResolver.openInputStream(selectedImageUri)
-                        var bitmap:Bitmap = BitmapFactory.decodeStream(inputStream)
+                        var options = BitmapFactory.Options()
+                        var bitmap:Bitmap? = BitmapFactory.decodeStream(inputStream, null, options)
                         imageNote.setImageBitmap(bitmap)
                         imageNote.visibility = View.VISIBLE
                         imageRemoveImage.visibility = View.VISIBLE
+
 
                         selectedImagePath = getPathFromUri(selectedImageUri)
 

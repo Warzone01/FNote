@@ -11,9 +11,10 @@
 
     <com.makeramen.roundedimageview.RoundedImageView
         android:id="@+id/imageNote"
-        android:layout_width="match_parent"
+        android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:adjustViewBounds="true"
+        android:scaleType="centerInside"
         android:visibility="gone"
         app:riv_corner_radius_top_left="@dimen/_10sdp"
         app:riv_corner_radius_top_right="@dimen/_10sdp"/>
