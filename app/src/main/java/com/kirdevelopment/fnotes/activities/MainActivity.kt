@@ -1,7 +1,9 @@
 package com.kirdevelopment.fnotes.activities
 
 import android.Manifest
+import android.content.Context
 import android.content.Intent
+import android.content.SharedPreferences
 import android.content.pm.PackageManager
 import android.database.Cursor
 import android.graphics.drawable.ColorDrawable
@@ -26,6 +28,8 @@ import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
 import androidx.recyclerview.widget.RecyclerView
 import androidx.recyclerview.widget.StaggeredGridLayoutManager
+import com.google.android.gms.ads.*
+import com.google.android.gms.ads.mediation.MediationAdConfiguration
 import com.kirdevelopment.fnotes.R
 import com.kirdevelopment.fnotes.adapters.NotesAdapter
 import com.kirdevelopment.fnotes.database.NotesDatabase
@@ -33,7 +37,9 @@ import com.kirdevelopment.fnotes.entities.Note
 import com.kirdevelopment.fnotes.listeners.NotesListener
 import kotlinx.android.synthetic.main.activity_main.*
 import kotlinx.android.synthetic.main.layout_add_url.view.*
+import kotlinx.android.synthetic.main.note_item.*
 import org.jetbrains.anko.doAsync
+import org.jetbrains.anko.toast
 import org.jetbrains.anko.uiThread
 import kotlin.collections.ArrayList
 
@@ -44,7 +50,12 @@ class MainActivity : AppCompatActivity(), NotesListener {
     val REQUEST_CODE_SHOW_NOTE: Int = 3
     val REQUEST_CODE_SELECT_IMAGE: Int = 4
     val REQUEST_CODE_STORAGE_PERMISSION: Int = 5
+    val APP_PREFERENCES: String = "count"
 
+    private lateinit var mInterstitialAd: InterstitialAd
+
+    private var counterForAd: Int = 1
+    private lateinit var mSettings: SharedPreferences
 
     private lateinit var notesRecyclerView: RecyclerView
     private var noteList: ArrayList<Note> = ArrayList()
@@ -58,16 +69,54 @@ class MainActivity : AppCompatActivity(), NotesListener {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
 
-        val imageAddNoteMain: ImageView = findViewById(R.id.imageAddNoteMain) // Main button to add note
+        MediationAdConfiguration.TAG_FOR_CHILD_DIRECTED_TREATMENT_TRUE
+
+        MobileAds.initialize(this) {}
+        mInterstitialAd = InterstitialAd(this)
+        mInterstitialAd.adUnitId = "ca-app-pub-3940256099942544/1033173712"
+        mInterstitialAd.loadAd(AdRequest.Builder().build())
+
+        mInterstitialAd.adListener = object : AdListener() {
+            override fun onAdClosed() {
+                mInterstitialAd.loadAd(AdRequest.Builder().build())
+            }
+        }
+
+        mSettings = getSharedPreferences(APP_PREFERENCES, Context.MODE_PRIVATE)
+        val editor = mSettings.edit()
+        counterForAd += 1
+        editor.putInt(APP_PREFERENCES , counterForAd)
+        editor.apply()
+
+        val imageAddNoteMain: ImageView =
+            findViewById(R.id.imageAddNoteMain) // Main button to add note
 
         imageAddNoteMain.setOnClickListener {
-            startActivityForResult(Intent(applicationContext,
-                CreateNoteActivity::class.java),
-                REQUEST_CODE_ADD_NOTE) // new activity whe we press the button (add new note)
+            if (mInterstitialAd.isLoaded && mSettings.getInt(APP_PREFERENCES, 0) == 3) {
+                mInterstitialAd.show()
+                counterForAd = 1
+                editor.putInt(APP_PREFERENCES, counterForAd)
+                editor.apply()
+                println(counterForAd)
+            } else if (mInterstitialAd.isLoaded && mSettings.getInt(APP_PREFERENCES, 0) < 3) {
+                editor.putInt(APP_PREFERENCES, counterForAd++)
+                editor.apply()
+                println(counterForAd)
+            }else{
+                println("Some went wrong!")
+            }
+            startActivityForResult(
+                Intent(
+                    applicationContext,
+                    CreateNoteActivity::class.java
+                ),
+                REQUEST_CODE_ADD_NOTE
+            ) // new activity whe we press the button (add new note)
         }
 
         notesRecyclerView = findViewById(R.id.notesRecyclerView)
-        notesRecyclerView.layoutManager = StaggeredGridLayoutManager(2, StaggeredGridLayoutManager.VERTICAL)
+        notesRecyclerView.layoutManager =
+            StaggeredGridLayoutManager(2, StaggeredGridLayoutManager.VERTICAL)
 
         noteAdapter = NotesAdapter(noteList, this)
         notesRecyclerView.adapter = noteAdapter
@@ -75,7 +124,7 @@ class MainActivity : AppCompatActivity(), NotesListener {
         getNotes(REQUEST_CODE_SHOW_NOTE, false)
 
         var inputSearch: EditText = findViewById(R.id.inputSearch)
-        inputSearch.addTextChangedListener(object : TextWatcher{
+        inputSearch.addTextChangedListener(object : TextWatcher {
             override fun beforeTextChanged(s: CharSequence?, start: Int, count: Int, after: Int) {
 
             }
@@ -85,29 +134,61 @@ class MainActivity : AppCompatActivity(), NotesListener {
             }
 
             override fun afterTextChanged(s: Editable?) {
-                if (noteList.size != 0){
+                if (noteList.size != 0) {
                     noteAdapter.searchNotes(s.toString())
                 }
             }
         })
 
         imageAddNote.setOnClickListener {
-            startActivityForResult(Intent(applicationContext,
-                    CreateNoteActivity::class.java),
-                    REQUEST_CODE_ADD_NOTE) // new activity whe we press the button (add new note)
+            if (mInterstitialAd.isLoaded && mSettings.getInt(APP_PREFERENCES, 0) == 3) {
+                mInterstitialAd.show()
+                counterForAd = 1
+                editor.putInt(APP_PREFERENCES, counterForAd)
+                editor.apply()
+                println(counterForAd)
+            } else if (mInterstitialAd.isLoaded && mSettings.getInt(APP_PREFERENCES, 0) < 3) {
+                editor.putInt(APP_PREFERENCES, counterForAd++)
+                editor.apply()
+                println(counterForAd)
+            }else{
+                println("Some went wrong!")
+            }
+            startActivityForResult(
+                Intent(
+                    applicationContext,
+                    CreateNoteActivity::class.java
+                ),
+                REQUEST_CODE_ADD_NOTE
+            ) // new activity whe we press the button (add new note)
         }
 
         imageAddImage.setOnClickListener {
+            if (mInterstitialAd.isLoaded && mSettings.getInt(APP_PREFERENCES, 0) == 3) {
+                mInterstitialAd.show()
+                counterForAd = 1
+                editor.putInt(APP_PREFERENCES, counterForAd)
+                editor.apply()
+                println(counterForAd)
+            } else if (mInterstitialAd.isLoaded && mSettings.getInt(APP_PREFERENCES, 0) < 3) {
+                editor.putInt(APP_PREFERENCES, counterForAd++)
+                editor.apply()
+                println(counterForAd)
+            }else{
+                println("Some went wrong!")
+            }
             if (ContextCompat.checkSelfPermission(
-                            applicationContext,
-                            Manifest.permission.READ_EXTERNAL_STORAGE
-                    ) != PackageManager.PERMISSION_GRANTED){
+                    applicationContext,
+                    Manifest.permission.READ_EXTERNAL_STORAGE
+                ) != PackageManager.PERMISSION_GRANTED
+            ) {
                 ActivityCompat.requestPermissions(
-                        this@MainActivity,
-                        arrayOf(Manifest.permission.READ_EXTERNAL_STORAGE),
-                        REQUEST_CODE_STORAGE_PERMISSION
+                    this@MainActivity,
+                    arrayOf(Manifest.permission.READ_EXTERNAL_STORAGE),
+                    REQUEST_CODE_STORAGE_PERMISSION
                 )
-            }else {
+
+            } else {
                 selectImage()
             }
         }
@@ -115,6 +196,11 @@ class MainActivity : AppCompatActivity(), NotesListener {
         imageAddLink.setOnClickListener {
             showAddURLDialog()
         }
+
+    }
+
+    private fun initAd(appUnitId:String){
+
     }
 
     private fun selectImage() {
@@ -203,6 +289,7 @@ class MainActivity : AppCompatActivity(), NotesListener {
                 var selectedImageUri: Uri? = data.data
                 if (selectedImageUri != null){
                     try {
+                        val editor = mSettings.edit()
                         var selectedImagePath: String = getPathFromUri(selectedImageUri)
                         var intent: Intent = Intent(applicationContext, CreateNoteActivity::class.java)
                         intent.putExtra("isFromQuickActions", true)
@@ -235,6 +322,7 @@ class MainActivity : AppCompatActivity(), NotesListener {
             inputURL.requestFocus()
 
             view.textAdd.setOnClickListener {
+
                 if (inputURL.text.toString().trim().isEmpty()){
                     Toast.makeText(this@MainActivity, "Enter URL", Toast.LENGTH_SHORT).show()
                 } else if(!Patterns.WEB_URL.matcher(inputURL.text.toString()).matches()){

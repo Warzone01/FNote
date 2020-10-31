@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">FNotes</string>
+    <string name="free_notes_logo">FREE Notes</string>
+    <string name="search_hint">Поиск</string>
+    <string name="note_title_edit_text">Название заметки</string>
+    <string name="note_subtitle_edit_text">Описание заметки</string>
+    <string name="input_note_edit_text">Текст заметки</string>
+    <string name="miscellaneous">Дополнительно</string>
+    <string name="pick_color">Цвет</string>
+    <string name="add_image">Добавить изображение</string>
+    <string name="add_url">Добавить ссылку</string>
+    <string name="enter_url">Введите ссылку</string>
+    <string name="add">Добавить</string>
+    <string name="cancel_dialog">Отмена</string>
+    <string name="delete_note">Удалить заметку</string>
+    <string name="are_you_sure_you_want_to_delete_note">Вы действительно хотите удалить заметку?</string>
+</resources>
