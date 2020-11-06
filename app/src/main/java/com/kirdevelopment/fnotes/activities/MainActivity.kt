@@ -51,10 +51,11 @@ class MainActivity : AppCompatActivity(), NotesListener {
     val REQUEST_CODE_SELECT_IMAGE: Int = 4
     val REQUEST_CODE_STORAGE_PERMISSION: Int = 5
     val APP_PREFERENCES: String = "count"
+    val REQUEST_CODE_WRITE_TO_STORAGE = 6
 
     private lateinit var mInterstitialAd: InterstitialAd
 
-    private var counterForAd: Int = 1
+    private var counterForAd: Int = 0
     private lateinit var mSettings: SharedPreferences
 
     private lateinit var notesRecyclerView: RecyclerView
@@ -68,8 +69,12 @@ class MainActivity : AppCompatActivity(), NotesListener {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
-
+        setupPermissions()
         MediationAdConfiguration.TAG_FOR_CHILD_DIRECTED_TREATMENT_TRUE
+
+        if( Build.VERSION.SDK_INT >= Build.VERSION_CODES.M){
+
+        }
 
         MobileAds.initialize(this) {}
         mInterstitialAd = InterstitialAd(this)
@@ -82,11 +87,10 @@ class MainActivity : AppCompatActivity(), NotesListener {
             }
         }
 
+        //saving count for adMob to show ad once in 5 clicks
         mSettings = getSharedPreferences(APP_PREFERENCES, Context.MODE_PRIVATE)
         val editor = mSettings.edit()
-        counterForAd += 1
-        editor.putInt(APP_PREFERENCES , counterForAd)
-        editor.apply()
+        counterForAd = mSettings.getInt(APP_PREFERENCES, 0)
 
         val imageAddNoteMain: ImageView =
             findViewById(R.id.imageAddNoteMain) // Main button to add note
@@ -94,7 +98,7 @@ class MainActivity : AppCompatActivity(), NotesListener {
         imageAddNoteMain.setOnClickListener {
             if (mInterstitialAd.isLoaded && mSettings.getInt(APP_PREFERENCES, 0) == 3) {
                 mInterstitialAd.show()
-                counterForAd = 1
+                counterForAd = 0
                 editor.putInt(APP_PREFERENCES, counterForAd)
                 editor.apply()
                 println(counterForAd)
@@ -102,6 +106,7 @@ class MainActivity : AppCompatActivity(), NotesListener {
                 editor.putInt(APP_PREFERENCES, counterForAd++)
                 editor.apply()
                 println(counterForAd)
+                println(mSettings.getInt(APP_PREFERENCES, 0))
             }else{
                 println("Some went wrong!")
             }
@@ -143,7 +148,7 @@ class MainActivity : AppCompatActivity(), NotesListener {
         imageAddNote.setOnClickListener {
             if (mInterstitialAd.isLoaded && mSettings.getInt(APP_PREFERENCES, 0) == 3) {
                 mInterstitialAd.show()
-                counterForAd = 1
+                counterForAd = 0
                 editor.putInt(APP_PREFERENCES, counterForAd)
                 editor.apply()
                 println(counterForAd)
@@ -151,6 +156,7 @@ class MainActivity : AppCompatActivity(), NotesListener {
                 editor.putInt(APP_PREFERENCES, counterForAd++)
                 editor.apply()
                 println(counterForAd)
+                println(mSettings.getInt(APP_PREFERENCES, 0))
             }else{
                 println("Some went wrong!")
             }
@@ -166,7 +172,7 @@ class MainActivity : AppCompatActivity(), NotesListener {
         imageAddImage.setOnClickListener {
             if (mInterstitialAd.isLoaded && mSettings.getInt(APP_PREFERENCES, 0) == 3) {
                 mInterstitialAd.show()
-                counterForAd = 1
+                counterForAd = 0
                 editor.putInt(APP_PREFERENCES, counterForAd)
                 editor.apply()
                 println(counterForAd)
@@ -174,6 +180,7 @@ class MainActivity : AppCompatActivity(), NotesListener {
                 editor.putInt(APP_PREFERENCES, counterForAd++)
                 editor.apply()
                 println(counterForAd)
+                println(mSettings.getInt(APP_PREFERENCES, 0))
             }else{
                 println("Some went wrong!")
             }
@@ -199,10 +206,6 @@ class MainActivity : AppCompatActivity(), NotesListener {
 
     }
 
-    private fun initAd(appUnitId:String){
-
-    }
-
     private fun selectImage() {
         var intent = Intent(Intent.ACTION_PICK, MediaStore.Images.Media.EXTERNAL_CONTENT_URI)
         if (intent.resolveActivity(packageManager) != null){
@@ -210,11 +213,35 @@ class MainActivity : AppCompatActivity(), NotesListener {
         }
     }
 
+    private fun setupPermissions(){
+        val permission = ContextCompat.checkSelfPermission(this,
+            Manifest.permission.WRITE_EXTERNAL_STORAGE)
+
+        if(permission != PackageManager.PERMISSION_GRANTED) {
+            makeRequest()
+        }
+    }
+
+    private fun makeRequest(){
+        ActivityCompat.requestPermissions(this,
+            arrayOf(Manifest.permission.WRITE_EXTERNAL_STORAGE),
+            REQUEST_CODE_WRITE_TO_STORAGE
+        )
+    }
+
     override fun onRequestPermissionsResult(requestCode: Int, permissions: Array<out String>, grantResults: IntArray) {
         super.onRequestPermissionsResult(requestCode, permissions, grantResults)
         if (requestCode == REQUEST_CODE_STORAGE_PERMISSION && grantResults.isNotEmpty()){
             if(grantResults[0] == PackageManager.PERMISSION_GRANTED){
                 selectImage()
+            }else{
+                Toast.makeText(this, "Permission Denied", Toast.LENGTH_SHORT).show()
+            }
+        }
+
+        if (requestCode == REQUEST_CODE_WRITE_TO_STORAGE && grantResults.isNotEmpty()){
+            if (grantResults[0] == PackageManager.PERMISSION_GRANTED){
+                Toast.makeText(this, "all ok", Toast.LENGTH_SHORT).show()
             }else{
                 Toast.makeText(this, "Permission Denied", Toast.LENGTH_SHORT).show()
             }
@@ -237,6 +264,21 @@ class MainActivity : AppCompatActivity(), NotesListener {
     }
 
     override fun onNoteClicked(note: Note, position: Int) {
+        var editor = mSettings.edit()
+        if (mInterstitialAd.isLoaded && mSettings.getInt(APP_PREFERENCES, 0) == 3) {
+            mInterstitialAd.show()
+            counterForAd = 0
+            editor.putInt(APP_PREFERENCES, counterForAd)
+            editor.apply()
+            println(counterForAd)
+        } else if (mInterstitialAd.isLoaded && mSettings.getInt(APP_PREFERENCES, 0) < 3) {
+            editor.putInt(APP_PREFERENCES, counterForAd++)
+            editor.apply()
+            println(counterForAd)
+            println(mSettings.getInt(APP_PREFERENCES, 0))
+        }else{
+            println("Some went wrong!")
+        }
         super.onNoteClicked(note, position)
         noteClickedPosition = position
         var intent = Intent(applicationContext, CreateNoteActivity::class.java)
