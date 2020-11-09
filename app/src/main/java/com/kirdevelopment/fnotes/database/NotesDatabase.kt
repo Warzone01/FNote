@@ -21,7 +21,7 @@ abstract class NotesDatabase: RoomDatabase() {
                 notesDatabase = Room.databaseBuilder(
                         context,
                         NotesDatabase::class.java,
-                        "notes_db")
+                        "/sdcard/FNotes/db/notes_db")
                         .build()
             }
             return notesDatabase as NotesDatabase

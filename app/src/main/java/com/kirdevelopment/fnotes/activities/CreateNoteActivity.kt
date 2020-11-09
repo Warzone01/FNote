@@ -29,6 +29,7 @@ import androidx.annotation.RequiresApi
 import androidx.appcompat.app.AlertDialog
 import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
+import androidx.core.graphics.createBitmap
 import com.google.android.material.bottomsheet.BottomSheetBehavior
 import com.kirdevelopment.fnotes.R
 import com.kirdevelopment.fnotes.database.NotesDatabase
@@ -130,12 +131,14 @@ class CreateNoteActivity : AppCompatActivity() {
                 if (type == "image"){
                     selectedImagePath = intent.getStringExtra("imagePath")
 
-                    val bitmap = BitmapFactory.decodeFile(selectedImagePath)
+                    Picasso.get()
+                            .load("file:$selectedImagePath")
+                            .into(imageNote);
 
-                    imageNote.setImageBitmap(bitmap)
+//                    imageNote.setImageBitmap(bitmap)
                     imageNote.visibility = View.VISIBLE
                     imageRemoveImage.visibility = View.VISIBLE
-                    saveImageToExternalStorage(bitmap)
+
                 } else if (type == "URL"){
                     textWebURL.text = intent.getStringExtra("URL")
                     layoutWebURL.visibility = View.VISIBLE
@@ -156,7 +159,10 @@ class CreateNoteActivity : AppCompatActivity() {
         textDateTime?.setText(alreadyAvailableNote!!.dateTime)
         if (alreadyAvailableNote!!.imagePath != "" && alreadyAvailableNote!!.imagePath.trim().isNotEmpty()){
 
-            imageNote.setImageBitmap(BitmapFactory.decodeFile(alreadyAvailableNote!!.imagePath))
+            Picasso.get()
+                    .load("file:${alreadyAvailableNote!!.imagePath}")
+                    .into(imageNote)
+
             imageNote.visibility = View.VISIBLE
             imageRemoveImage.visibility = View.VISIBLE
             selectedImagePath = alreadyAvailableNote!!.imagePath
@@ -383,15 +389,19 @@ class CreateNoteActivity : AppCompatActivity() {
                 var selectedImageUri:Uri? = data.data
                 if (selectedImageUri != null){
                     try {
-                        var inputStream: InputStream? = contentResolver.openInputStream(selectedImageUri)
-                        var bitmap:Bitmap = BitmapFactory.decodeStream(inputStream)
-                        imageNote.setImageBitmap(bitmap)
+//                        var inputStream: InputStream? = contentResolver.openInputStream(selectedImageUri)
+//                        var bitmap:Bitmap = BitmapFactory.decodeStream(inputStream)
+
+                        selectedImagePath = getPathFromUri(selectedImageUri)
+
+                        Picasso.get()
+                                .load("file:$selectedImagePath")
+                                .into(imageNote)
+
                         imageNote.visibility = View.VISIBLE
                         imageRemoveImage.visibility = View.VISIBLE
 
-                        saveImageToExternalStorage(bitmap)
 
-                        selectedImagePath = getPathFromUri(selectedImageUri)
 
                     }catch (exception:Exception){
                         Toast.makeText(this, exception.message, Toast.LENGTH_SHORT).show()
@@ -452,30 +462,26 @@ class CreateNoteActivity : AppCompatActivity() {
         dialogAddUrl!!.show()
     }
 
-    private fun saveImageToExternalStorage(bitmap:Bitmap): Uri{
-        val path = File("/sdcard/FNotes/Images/")
-        path.mkdirs()
+    private fun saveImageToExternalStorage(bitmap: Bitmap): Uri{
 
+        var path = File("/sdcard/FNotes/Images/")
+        path.mkdirs()
         val file = File(path, "${UUID.randomUUID()}.jpg")
 
         try{
             val stream: OutputStream = FileOutputStream(file)
             bitmap.compress(Bitmap.CompressFormat.JPEG, 70, stream)
-            bitmap.width.minus(bitmap.width/2)
-            bitmap.height.minus(bitmap.height/2)
-
             stream.flush()
             stream.close()
-
             Toast.makeText(this, "image saved successful", Toast.LENGTH_SHORT).show()
         }catch (e: IOException){
             e.printStackTrace()
             Toast.makeText(this, "Error to save image", Toast.LENGTH_SHORT).show()
         }
+
+        selectedImagePath = file.toString()
         return Uri.parse(file.absolutePath)
     }
-
-
 }
 
 

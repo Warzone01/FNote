@@ -1,5 +1,6 @@
 package com.kirdevelopment.fnotes.adapters
 
+import android.graphics.Bitmap
 import android.graphics.BitmapFactory
 import android.graphics.Color
 import android.graphics.Color.*
@@ -16,12 +17,14 @@ import android.widget.LinearLayout
 import android.widget.TextView
 import androidx.annotation.NonNull
 import androidx.annotation.RequiresApi
+import androidx.core.graphics.createBitmap
 import androidx.recyclerview.widget.RecyclerView
 import com.kirdevelopment.fnotes.R
 import com.kirdevelopment.fnotes.activities.CreateNoteActivity
 import com.kirdevelopment.fnotes.entities.Note
 import com.kirdevelopment.fnotes.listeners.NotesListener
 import com.makeramen.roundedimageview.RoundedImageView
+import com.squareup.picasso.Picasso
 import kotlinx.android.synthetic.main.layout_miscellaneous.view.*
 import kotlinx.android.synthetic.main.note_item.view.*
 import java.util.*
@@ -94,7 +97,14 @@ class NotesAdapter(private var notes: List<Note>,
             }
 
             if (note.imagePath != ""){
-                imageNote.setImageBitmap(BitmapFactory.decodeFile(note.imagePath))
+                var bitmap = BitmapFactory.decodeFile(note.imagePath)
+                var imgWidth = bitmap.width
+                var imgHeight = bitmap.height
+                Picasso.get()
+                        .load("file:${note.imagePath}")
+                        .resize(imgWidth/2, imgHeight/2)
+                        .centerInside()
+                        .into(imageNote)
                 imageNote.visibility = View.VISIBLE
             }else{
                 imageNote.visibility = View.GONE
