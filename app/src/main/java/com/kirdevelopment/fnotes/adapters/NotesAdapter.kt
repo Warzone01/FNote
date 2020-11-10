@@ -98,12 +98,12 @@ class NotesAdapter(private var notes: List<Note>,
 
             if (note.imagePath != ""){
                 var bitmap = BitmapFactory.decodeFile(note.imagePath)
-                var imgWidth = bitmap.width
-                var imgHeight = bitmap.height
+                var imgWidth = bitmap.width / 6
+                var imgHeight = bitmap.height / 6
                 Picasso.get()
                         .load("file:${note.imagePath}")
-                        .resize(imgWidth/2, imgHeight/2)
-                        .centerInside()
+                        .resize(imgWidth, imgHeight)
+                        .centerCrop()
                         .into(imageNote)
                 imageNote.visibility = View.VISIBLE
             }else{
@@ -136,7 +136,7 @@ class NotesAdapter(private var notes: List<Note>,
         }, 500)
     }
 
-    public fun cancelTimer(){
+    fun cancelTimer(){
         if (timer != null){
             timer!!.cancel()
         }

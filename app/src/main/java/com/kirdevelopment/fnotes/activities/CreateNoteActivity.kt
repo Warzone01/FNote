@@ -131,8 +131,14 @@ class CreateNoteActivity : AppCompatActivity() {
                 if (type == "image"){
                     selectedImagePath = intent.getStringExtra("imagePath")
 
+                    val bitmap = BitmapFactory.decodeFile(selectedImagePath)
+                    val imgWidth = bitmap.width / 3
+                    val imgHeight = bitmap.height / 3
+
                     Picasso.get()
                             .load("file:$selectedImagePath")
+                            .resize(imgWidth, imgHeight)
+                            .centerInside()
                             .into(imageNote);
 
 //                    imageNote.setImageBitmap(bitmap)
@@ -159,8 +165,14 @@ class CreateNoteActivity : AppCompatActivity() {
         textDateTime?.setText(alreadyAvailableNote!!.dateTime)
         if (alreadyAvailableNote!!.imagePath != "" && alreadyAvailableNote!!.imagePath.trim().isNotEmpty()){
 
+            val bitmap = BitmapFactory.decodeFile(alreadyAvailableNote!!.imagePath)
+            val imgWidth = bitmap.width / 3
+            val imgHeight = bitmap.height / 3
+
             Picasso.get()
                     .load("file:${alreadyAvailableNote!!.imagePath}")
+                    .resize(imgWidth, imgWidth)
+                    .centerInside()
                     .into(imageNote)
 
             imageNote.visibility = View.VISIBLE
@@ -394,8 +406,14 @@ class CreateNoteActivity : AppCompatActivity() {
 
                         selectedImagePath = getPathFromUri(selectedImageUri)
 
+                        val bitmap = BitmapFactory.decodeFile(selectedImagePath)
+                        val imgWidth = bitmap.width / 3
+                        val imgHeght = bitmap.height / 3
+
                         Picasso.get()
                                 .load("file:$selectedImagePath")
+                                .resize(imgWidth, imgHeght)
+                                .centerInside()
                                 .into(imageNote)
 
                         imageNote.visibility = View.VISIBLE
