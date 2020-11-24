@@ -36,7 +36,9 @@ import com.kirdevelopment.fnotes.database.NotesDatabase
 import com.kirdevelopment.fnotes.entities.Note
 import com.squareup.picasso.Picasso
 import kotlinx.android.synthetic.main.activity_create_note.*
+import kotlinx.android.synthetic.main.layout_add_todo.view.*
 import kotlinx.android.synthetic.main.layout_add_url.view.*
+import kotlinx.android.synthetic.main.layout_add_url.view.textAdd
 import kotlinx.android.synthetic.main.layout_add_url.view.textCancel
 import kotlinx.android.synthetic.main.layout_delete_note.view.*
 import kotlinx.android.synthetic.main.layout_miscellaneous.*
@@ -60,6 +62,7 @@ class CreateNoteActivity : AppCompatActivity() {
     private lateinit var imageNote: ImageView
     private lateinit var textWebURL: TextView
     private lateinit var layoutWebURL: LinearLayout
+    private var inputToDoList: EditText? = null
 
     private lateinit var viewSubtitleIndicator: View
 
@@ -72,6 +75,7 @@ class CreateNoteActivity : AppCompatActivity() {
 
     private var dialogAddUrl: AlertDialog? = null
     private var dialogDeleteNote: AlertDialog? = null
+    private var dialogAddToDo: AlertDialog? = null
 
     private var alreadyAvailableNote: Note? = null
 
@@ -96,6 +100,7 @@ class CreateNoteActivity : AppCompatActivity() {
         imageNote = findViewById(R.id.imageNote)
         textWebURL = findViewById(R.id.textWebURl)
         layoutWebURL = findViewById(R.id.layoutWebUrl)
+        inputToDoList = findViewById(R.id.inputToDo)
 
         nDb = NotesDatabase.getDatabase(applicationContext) // get note database
 
@@ -188,11 +193,11 @@ class CreateNoteActivity : AppCompatActivity() {
 
     private fun saveNote(){
         if (inputNoteTitle!!.text.toString().trim().isEmpty()) { // Show error if note title empty
-            Toast.makeText(this, "Note title can't be empty!", Toast.LENGTH_SHORT).show()
+            Toast.makeText(this, R.string.note_title_empty, Toast.LENGTH_SHORT).show()
             return
         }else if (inputNoteSubtitle!!.text.toString().trim().isEmpty()
                 &&inputNoteText!!.text.toString().trim().isEmpty()){ // if text and subtitle empty - show error
-            Toast.makeText(this, "Note cant't be empty!", Toast.LENGTH_SHORT).show()
+            Toast.makeText(this, R.string.note_subtitle_empty, Toast.LENGTH_SHORT).show()
             return
         }
 
@@ -323,6 +328,11 @@ class CreateNoteActivity : AppCompatActivity() {
             showAddURLDialog()
         }
 
+//        layoutMiscellaneous.layoutAddToDoList.setOnClickListener {
+//            bottomSheetBehavior.state = BottomSheetBehavior.STATE_COLLAPSED
+//            showAddToDoDialog()
+//        }
+
         if (alreadyAvailableNote != null){
             layoutMiscellaneous.layoutDeleteNote.visibility = View.VISIBLE
             layoutMiscellaneous.layoutDeleteNote.setOnClickListener {
@@ -387,7 +397,7 @@ class CreateNoteActivity : AppCompatActivity() {
             if(grantResults[0] == PackageManager.PERMISSION_GRANTED){
                 selectImage()
             }else{
-                Toast.makeText(this, "Permission Denied", Toast.LENGTH_SHORT).show()
+                Toast.makeText(this, R.string.permission, Toast.LENGTH_SHORT).show()
             }
         }
 
@@ -478,6 +488,27 @@ class CreateNoteActivity : AppCompatActivity() {
             }
         }
         dialogAddUrl!!.show()
+    }
+
+    private fun showAddToDoDialog(){
+        if (dialogAddToDo == null){
+            var builder: AlertDialog.Builder = AlertDialog.Builder(this@CreateNoteActivity)
+            val view: View = LayoutInflater.from(this).inflate(
+                R.layout.layout_add_todo,
+                findViewById<ViewGroup>(R.id.layoutAddToDoContainer)
+            )
+            builder.setView(view)
+
+            dialogAddToDo = builder.create()
+            if (dialogAddToDo!!.window != null){
+                dialogAddToDo!!.window!!.setBackgroundDrawable(ColorDrawable(0))
+            }
+
+            view.textCancel.setOnClickListener {
+                dialogAddToDo!!.dismiss()
+            }
+        }
+        dialogAddToDo!!.show()
     }
 
     private fun saveImageToExternalStorage(bitmap: Bitmap): Uri{

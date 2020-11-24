@@ -1,9 +1,7 @@
 package com.kirdevelopment.fnotes.entities
 
 import androidx.annotation.NonNull
-import androidx.room.ColumnInfo
-import androidx.room.Entity
-import androidx.room.PrimaryKey
+import androidx.room.*
 import java.io.Serializable
 
 /*
@@ -26,7 +24,8 @@ class Note(@PrimaryKey(autoGenerate = true) var id: Int?, // id of note
 
         @ColumnInfo(name = "color") var color:String, // color of note
 
-        @ColumnInfo(name = "web_link") var webLink:String): Serializable { // web link (if we want)
+        @ColumnInfo(name = "web_link") var webLink:String // web link (if we want)
+        ): Serializable {
 
     constructor():this(null,
         "",

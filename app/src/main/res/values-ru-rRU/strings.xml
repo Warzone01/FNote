@@ -15,4 +15,7 @@
     <string name="cancel_dialog">Отмена</string>
     <string name="delete_note">Удалить заметку</string>
     <string name="are_you_sure_you_want_to_delete_note">Вы действительно хотите удалить заметку?</string>
+    <string name="permission">Вы не предоставили разрешение!</string>
+    <string name="note_title_empty">Название не может быть пустым!</string>
+    <string name="note_subtitle_empty">Описание или заметка не могут быть пустыми!</string>
 </resources>

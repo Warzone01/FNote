@@ -15,4 +15,9 @@
     <string name="delete_note">Delete Note</string>
     <string name="are_you_sure_you_want_to_delete_note">Are you sure you want to delete this note?</string>
     <string name="add_todo_list">Add ToDo List</string>
+    <string name="permission">Permission denied!</string>
+    <string name="note_title_empty">Note title can\'t be empty!</string>
+    <string name="note_subtitle_empty">Note cant\'t be empty!</string>
+    <string name="enter_todo">Enter ToDo</string>
+    <string name="add_more">Add more</string>
 </resources>

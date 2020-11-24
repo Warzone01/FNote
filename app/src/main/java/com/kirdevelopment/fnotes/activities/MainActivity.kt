@@ -41,6 +41,7 @@ import kotlinx.android.synthetic.main.note_item.*
 import org.jetbrains.anko.doAsync
 import org.jetbrains.anko.toast
 import org.jetbrains.anko.uiThread
+import java.io.File
 import kotlin.collections.ArrayList
 
 class MainActivity : AppCompatActivity(), NotesListener {
@@ -70,11 +71,12 @@ class MainActivity : AppCompatActivity(), NotesListener {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
         setupPermissions()
+
         MediationAdConfiguration.TAG_FOR_CHILD_DIRECTED_TREATMENT_TRUE
 
         MobileAds.initialize(this) {}
         mInterstitialAd = InterstitialAd(this)
-        mInterstitialAd.adUnitId = "ca-app-pub-3940256099942544/1033173712"
+        mInterstitialAd.adUnitId = ""
         mInterstitialAd.loadAd(AdRequest.Builder().build())
 
         mInterstitialAd.adListener = object : AdListener() {
@@ -231,15 +233,17 @@ class MainActivity : AppCompatActivity(), NotesListener {
             if(grantResults[0] == PackageManager.PERMISSION_GRANTED){
                 selectImage()
             }else{
-                Toast.makeText(this, "Permission Denied", Toast.LENGTH_SHORT).show()
+                Toast.makeText(this, R.string.permission, Toast.LENGTH_SHORT).show()
             }
         }
 
         if (requestCode == REQUEST_CODE_WRITE_TO_STORAGE && grantResults.isNotEmpty()){
             if (grantResults[0] == PackageManager.PERMISSION_GRANTED){
-                Toast.makeText(this, "all ok", Toast.LENGTH_SHORT).show()
-            }else{
-                Toast.makeText(this, "Permission Denied", Toast.LENGTH_SHORT).show()
+                var path = File("/sdcard/FNotes/db/")
+                path.mkdirs()
+            }else if (grantResults[0] != PackageManager.PERMISSION_GRANTED){
+                finish()
+                Toast.makeText(this, R.string.permission, Toast.LENGTH_SHORT).show()
             }
         }
     }
