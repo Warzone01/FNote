@@ -76,7 +76,7 @@ class MainActivity : AppCompatActivity(), NotesListener {
 
         MobileAds.initialize(this) {}
         mInterstitialAd = InterstitialAd(this)
-        mInterstitialAd.adUnitId = ""
+        mInterstitialAd.adUnitId = "ca-app-pub-3940256099942544/1033173712"
         mInterstitialAd.loadAd(AdRequest.Builder().build())
 
         mInterstitialAd.adListener = object : AdListener() {

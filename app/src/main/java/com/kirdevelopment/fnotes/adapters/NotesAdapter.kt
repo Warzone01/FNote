@@ -98,14 +98,9 @@ class NotesAdapter(private var notes: List<Note>,
 
             if (note.imagePath != ""){
                 var bitmap = BitmapFactory.decodeFile(note.imagePath)
-                var imgWidth = bitmap.width / 6
-                var imgHeight = bitmap.height / 6
-                Picasso.get()
-                        .load("file:${note.imagePath}")
-                        .resize(imgWidth, imgHeight)
-                        .centerCrop()
-                        .into(imageNote)
+                imageNote.setImageBitmap(bitmap)
                 imageNote.visibility = View.VISIBLE
+                println(note.imagePath.toString())
             }else{
                 imageNote.visibility = View.GONE
             }
@@ -114,7 +109,7 @@ class NotesAdapter(private var notes: List<Note>,
 
     }
 
-    public fun searchNotes(searchKeyWord: String){
+    fun searchNotes(searchKeyWord: String){
         timer = Timer()
         timer!!.schedule(timerTask {
             if(searchKeyWord.trim().isEmpty()){

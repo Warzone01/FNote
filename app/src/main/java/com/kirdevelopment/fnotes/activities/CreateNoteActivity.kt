@@ -67,7 +67,7 @@ class CreateNoteActivity : AppCompatActivity() {
     private lateinit var viewSubtitleIndicator: View
 
     private lateinit var selectedNoteColor: String
-    private lateinit var selectedImagePath:String
+    private var selectedImagePath:String = ""
 
     private val REQUEST_CODE_STORAGE_PERMISSION: Int = 1
     private val REQUEST_CODE_SELECT_IMAGE = 2
@@ -79,12 +79,16 @@ class CreateNoteActivity : AppCompatActivity() {
 
     private var alreadyAvailableNote: Note? = null
 
+    private var bitmap = BitmapFactory.decodeFile(selectedImagePath)
+    private var angle: Float = 90f
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_create_note)
 
         val imageBack: ImageView = findViewById(R.id.imageViewBack)
         imageBack.setOnClickListener { onBackPressed() }
+
 
 
         //inti all fields
@@ -107,11 +111,11 @@ class CreateNoteActivity : AppCompatActivity() {
         //on click button done save note
         var imageViewSave: ImageView = findViewById(R.id.imageViewDoneButton)
         imageViewSave.setOnClickListener {
+            saveImageToExternalStorage(bitmap)
             saveNote()
         }
 
         selectedNoteColor = "#333333"
-        selectedImagePath = ""
 
         if (intent.getBooleanExtra("isViewOrUpdate", false)){
             alreadyAvailableNote = intent.getSerializableExtra("note") as Note
@@ -127,6 +131,7 @@ class CreateNoteActivity : AppCompatActivity() {
             imageNote.setImageBitmap(null)
             imageNote.visibility = View.GONE
             imageRemoveImage.visibility = View.GONE
+            imageRotateImage.visibility = View.GONE
             selectedImagePath = ""
         }
 
@@ -136,19 +141,18 @@ class CreateNoteActivity : AppCompatActivity() {
                 if (type == "image"){
                     selectedImagePath = intent.getStringExtra("imagePath")
 
-                    val bitmap = BitmapFactory.decodeFile(selectedImagePath)
-                    val imgWidth = bitmap.width / 3
-                    val imgHeight = bitmap.height / 3
+                    bitmap = BitmapFactory.decodeFile(selectedImagePath)
+                    val matrix = Matrix()
+                    matrix.postRotate(angle)
+                    imageNote.setImageBitmap(bitmap)
 
-                    Picasso.get()
-                            .load("file:$selectedImagePath")
-                            .resize(imgWidth, imgHeight)
-                            .centerInside()
-                            .into(imageNote);
-
-//                    imageNote.setImageBitmap(bitmap)
+                    imageRotateImage.setOnClickListener {
+                        bitmap = Bitmap.createBitmap(bitmap, 0, 0, bitmap.width, bitmap.height, matrix, true)
+                        imageNote.setImageBitmap(bitmap)
+                        }
                     imageNote.visibility = View.VISIBLE
                     imageRemoveImage.visibility = View.VISIBLE
+                    imageRotateImage.visibility = View.VISIBLE
 
                 } else if (type == "URL"){
                     textWebURL.text = intent.getStringExtra("URL")
@@ -170,18 +174,20 @@ class CreateNoteActivity : AppCompatActivity() {
         textDateTime?.setText(alreadyAvailableNote!!.dateTime)
         if (alreadyAvailableNote!!.imagePath != "" && alreadyAvailableNote!!.imagePath.trim().isNotEmpty()){
 
-            val bitmap = BitmapFactory.decodeFile(alreadyAvailableNote!!.imagePath)
-            val imgWidth = bitmap.width / 3
-            val imgHeight = bitmap.height / 3
+            bitmap = BitmapFactory.decodeFile(alreadyAvailableNote!!.imagePath)
 
-            Picasso.get()
-                    .load("file:${alreadyAvailableNote!!.imagePath}")
-                    .resize(imgWidth, imgWidth)
-                    .centerInside()
-                    .into(imageNote)
+            val matrix = Matrix()
+            matrix.postRotate(angle)
+            imageNote.setImageBitmap(bitmap)
+
+            imageRotateImage.setOnClickListener {
+                bitmap = Bitmap.createBitmap(bitmap, 0, 0, bitmap.width, bitmap.height, matrix, true)
+                imageNote.setImageBitmap(bitmap)
+            }
 
             imageNote.visibility = View.VISIBLE
             imageRemoveImage.visibility = View.VISIBLE
+            imageRotateImage.visibility = View.VISIBLE
             selectedImagePath = alreadyAvailableNote!!.imagePath
         }
 
@@ -411,25 +417,21 @@ class CreateNoteActivity : AppCompatActivity() {
                 var selectedImageUri:Uri? = data.data
                 if (selectedImageUri != null){
                     try {
-//                        var inputStream: InputStream? = contentResolver.openInputStream(selectedImageUri)
-//                        var bitmap:Bitmap = BitmapFactory.decodeStream(inputStream)
-
                         selectedImagePath = getPathFromUri(selectedImageUri)
 
-                        val bitmap = BitmapFactory.decodeFile(selectedImagePath)
-                        val imgWidth = bitmap.width / 3
-                        val imgHeght = bitmap.height / 3
+                        bitmap = BitmapFactory.decodeFile(selectedImagePath)
+                        val matrix = Matrix()
+                        matrix.postRotate(angle)
+                        imageNote.setImageBitmap(bitmap)
 
-                        Picasso.get()
-                                .load("file:$selectedImagePath")
-                                .resize(imgWidth, imgHeght)
-                                .centerInside()
-                                .into(imageNote)
+                        imageRotateImage.setOnClickListener {
+                            bitmap = Bitmap.createBitmap(bitmap, 0, 0, bitmap.width, bitmap.height, matrix, true)
+                            imageNote.setImageBitmap(bitmap)
+                        }
 
                         imageNote.visibility = View.VISIBLE
                         imageRemoveImage.visibility = View.VISIBLE
-
-
+                        imageRotateImage.visibility = View.VISIBLE
 
                     }catch (exception:Exception){
                         Toast.makeText(this, exception.message, Toast.LENGTH_SHORT).show()
@@ -519,7 +521,17 @@ class CreateNoteActivity : AppCompatActivity() {
 
         try{
             val stream: OutputStream = FileOutputStream(file)
-            bitmap.compress(Bitmap.CompressFormat.JPEG, 70, stream)
+            var outWidth = bitmap.width
+            var outHeight = bitmap.height
+
+            if (bitmap.width >= 1920 && bitmap.height >= 1080 || bitmap.width >= 1080 && bitmap.height >= 1920){
+                outWidth = bitmap.width / 4
+                outHeight = bitmap.height / 4
+            }
+
+            val result = Bitmap.createScaledBitmap(bitmap, outWidth, outHeight, false)
+
+            result.compress(Bitmap.CompressFormat.JPEG, 100, stream)
             stream.flush()
             stream.close()
             Toast.makeText(this, "image saved successful", Toast.LENGTH_SHORT).show()
@@ -529,6 +541,8 @@ class CreateNoteActivity : AppCompatActivity() {
         }
 
         selectedImagePath = file.toString()
+
+        println(selectedImagePath)
         return Uri.parse(file.absolutePath)
     }
 }
